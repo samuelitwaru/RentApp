@@ -13,5 +13,8 @@
   {% else %}
     <p class="text-muted">Please contact your landlord for a new link.</p>
   {% endif %}
+  {% if landlord_profile.phone %}
+    <p class="text-muted small mt-3">Or call us: {{ landlord_profile.phone }}</p>
+  {% endif %}
 </div>
 {% endblock %}

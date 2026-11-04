@@ -1,0 +1,40 @@
+name: Test and deploy to PythonAnywhere
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: python manage.py test
+      - name: Django system check
+        run: python manage.py check
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deploy script dependencies
+        run: pip install requests
+      - name: Deploy to PythonAnywhere
+        env:
+          PA_API_TOKEN: ${{ secrets.PA_API_TOKEN }}
+          PA_USERNAME: ${{ secrets.PA_USERNAME }}
+          PA_DOMAIN: ${{ secrets.PA_DOMAIN }}
+          PA_PROJECT_PATH: ${{ secrets.PA_PROJECT_PATH }}
+          PA_VENV_PATH: ${{ secrets.PA_VENV_PATH }}
+        run: python scripts/pa_deploy.py
