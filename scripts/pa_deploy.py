@@ -21,6 +21,8 @@ import requests
 API_BASE = "https://www.pythonanywhere.com/api/v0/user/{username}/"
 POLL_INTERVAL_SECONDS = 3
 TIMEOUT_SECONDS = 300
+CONSOLE_READY_POLL_SECONDS = 2
+CONSOLE_READY_TIMEOUT_SECONDS = 30
 DONE_MARKER = "__DEPLOY_OK__"
 FAIL_MARKER = "__DEPLOY_FAILED__"
 
@@ -64,13 +66,24 @@ def main():
             "python manage.py collectstatic --noinput && "
             f"echo {DONE_MARKER} || echo {FAIL_MARKER}"
         )
-        print("Sending deploy command...")
-        requests.post(
-            f"{base_url}consoles/{console_id}/send_input/",
-            headers=headers,
-            json={"input": deploy_command + "\n"},
-            timeout=30,
-        ).raise_for_status()
+        print("Waiting for console to be ready...")
+        send_input_url = f"{base_url}consoles/{console_id}/send_input/"
+        ready_deadline = time.time() + CONSOLE_READY_TIMEOUT_SECONDS
+        while True:
+            send_response = requests.post(
+                send_input_url,
+                headers=headers,
+                json={"input": deploy_command + "\n"},
+                timeout=30,
+            )
+            if send_response.status_code == 412:
+                if time.time() >= ready_deadline:
+                    send_response.raise_for_status()
+                time.sleep(CONSOLE_READY_POLL_SECONDS)
+                continue
+            send_response.raise_for_status()
+            break
+        print("Deploy command sent.")
 
         print("Waiting for deploy to finish...")
         elapsed = 0
