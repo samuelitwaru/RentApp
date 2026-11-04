@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Link expired{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <h1 class="h4">This link has expired.</h1>
+  {% if link %}
+    <p class="text-muted">Request a new link and we'll send it to you via WhatsApp.</p>
+    <form method="post" action="{% url 'request_new_link' token %}" target="_blank">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success">Request a new link via WhatsApp</button>
+    </form>
+  {% else %}
+    <p class="text-muted">Please contact your landlord for a new link.</p>
+  {% endif %}
+</div>
+{% endblock %}

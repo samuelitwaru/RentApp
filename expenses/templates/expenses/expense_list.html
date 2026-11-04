@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load currency %}
+{% block title %}Expenses{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Expenses</h1>
+  <div>
+    <a href="{% url 'expense_category_list' %}" class="btn btn-outline-secondary btn-sm">Categories</a>
+    <a href="{% url 'expense_create' %}" class="btn btn-primary btn-sm">Record expense</a>
+  </div>
+</div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-sm-3">
+    <select name="property" class="form-select">
+      <option value="">All properties</option>
+      {% for p in properties %}<option value="{{ p.pk }}" {% if request.GET.property == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-3">
+    <select name="category" class="form-select">
+      <option value="">All categories</option>
+      {% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-2"><input type="date" name="date_from" value="{{ request.GET.date_from }}" class="form-control"></div>
+  <div class="col-sm-2"><input type="date" name="date_to" value="{{ request.GET.date_to }}" class="form-control"></div>
+  <div class="col-sm-2"><button class="btn btn-outline-secondary w-100">Filter</button></div>
+</form>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Date</th><th>Property</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead>
+  <tbody>
+    {% for expense in expenses %}
+      <tr>
+        <td>{{ expense.date }}</td>
+        <td>{{ expense.property }}{% if expense.unit %} / {{ expense.unit }}{% endif %}</td>
+        <td>{{ expense.category }}</td>
+        <td>{{ expense.description }}</td>
+        <td>{{ expense.amount|ugx }}</td>
+        <td class="text-end">
+          <a href="{% url 'expense_edit' expense.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+          <a href="{% url 'expense_delete' expense.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="text-muted">No expenses yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

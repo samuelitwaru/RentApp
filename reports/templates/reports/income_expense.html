@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load currency %}
+{% block title %}Income vs expenses{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Income vs expenses</h1>
+  <a href="?{{ request.GET.urlencode }}&export=csv" class="btn btn-outline-secondary btn-sm">Export CSV</a>
+</div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-sm-3">
+    <select name="property" class="form-select">
+      <option value="">All properties</option>
+      {% for p in properties %}<option value="{{ p.pk }}" {% if request.GET.property == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-3"><input type="date" name="date_from" value="{{ request.GET.date_from }}" class="form-control"></div>
+  <div class="col-sm-3"><input type="date" name="date_to" value="{{ request.GET.date_to }}" class="form-control"></div>
+  <div class="col-sm-3"><button class="btn btn-outline-secondary w-100">Filter</button></div>
+</form>
+
+<h2 class="h5">By month</h2>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Month</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead>
+  <tbody>
+    {% for month, row in by_month %}
+      <tr>
+        <td>{{ month }}</td>
+        <td>{{ row.income|ugx }}</td>
+        <td>{{ row.expenses|ugx }}</td>
+        <td>{{ row.net|ugx }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">No data.</td></tr>{% endfor %}
+  </tbody>
+</table>
+
+<h2 class="h5">By property</h2>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Property</th><th>Income</th><th>Expenses</th></tr></thead>
+  <tbody>
+    {% for property, row in by_property %}
+      <tr><td>{{ property }}</td><td>{{ row.income|ugx }}</td><td>{{ row.expenses|ugx }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="text-muted">No data.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

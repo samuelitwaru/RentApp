@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Expense categories{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Expense categories</h1>
+  <a href="{% url 'expense_category_create' %}" class="btn btn-primary btn-sm">Add category</a>
+</div>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Name</th><th>Description</th><th></th></tr></thead>
+  <tbody>
+    {% for category in categories %}
+      <tr>
+        <td>{{ category.name }}</td>
+        <td>{{ category.description }}</td>
+        <td class="text-end">
+          <a href="{% url 'expense_category_edit' category.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+          <a href="{% url 'expense_category_delete' category.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

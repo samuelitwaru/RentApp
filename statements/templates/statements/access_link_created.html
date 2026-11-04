@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Access link created{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Access link for {{ tenant.full_name }}</h1>
+<div class="alert alert-warning">
+  This link is shown only once now. If you lose it, you'll need to generate a new one — it cannot be recovered.
+</div>
+<div class="input-group mb-3">
+  <input type="text" id="statementLink" class="form-control" value="{{ statement_url }}" readonly>
+  <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('statementLink').value)">Copy link</button>
+</div>
+<p class="text-muted">Expires: {{ link.expires_at|date:"d M Y, h:i A" }}</p>
+<a href="{{ whatsapp_url }}" target="_blank" class="btn btn-success">Send via WhatsApp</a>
+<a href="{% url 'tenant_detail' tenant.pk %}" class="btn btn-outline-secondary">Back to tenant</a>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load currency %}
+{% block title %}Payments{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Payments</h1>
+  <a href="{% url 'payment_create' %}" class="btn btn-primary btn-sm">Record payment</a>
+</div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-sm-3"><input type="search" name="tenant" value="{{ request.GET.tenant }}" class="form-control" placeholder="Tenant"></div>
+  <div class="col-sm-3">
+    <select name="property" class="form-select">
+      <option value="">All properties</option>
+      {% for p in properties %}<option value="{{ p.pk }}" {% if request.GET.property == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-2"><input type="date" name="date_from" value="{{ request.GET.date_from }}" class="form-control"></div>
+  <div class="col-sm-2"><input type="date" name="date_to" value="{{ request.GET.date_to }}" class="form-control"></div>
+  <div class="col-sm-2"><button class="btn btn-outline-secondary w-100">Filter</button></div>
+</form>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Date</th><th>Tenant</th><th>Unit</th><th>Amount</th><th>Period</th><th>Method</th><th>Receipt</th></tr></thead>
+  <tbody>
+    {% for payment in payments %}
+      <tr>
+        <td><a href="{% url 'payment_detail' payment.pk %}">{{ payment.payment_date }}</a></td>
+        <td>{{ payment.tenancy.tenant.full_name }}</td>
+        <td>{{ payment.tenancy.unit }}</td>
+        <td>{{ payment.amount|ugx }}</td>
+        <td>{{ payment.period_display }}</td>
+        <td>{{ payment.get_method_display }}</td>
+        <td>
+          {% if payment.receipt %}
+            <a href="{% url 'receipt_pdf' payment.pk %}">PDF</a> ·
+            <a href="{% url 'receipt_jpg' payment.pk %}">JPG</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="text-muted">No payments yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if is_paginated %}
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>{% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

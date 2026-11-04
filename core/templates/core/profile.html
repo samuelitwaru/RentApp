@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}My profile{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <h1 class="h4 mb-3">My profile</h1>
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <h2 class="h6 text-muted">Account</h2>
+      {% for field in user_form %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+
+      <h2 class="h6 text-muted mt-4">Receipt details &amp; signature</h2>
+      {% for field in profile_form %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {% if field.name == "signature" and profile.signature %}
+            <div class="mb-2">
+              <img src="{{ profile.signature.url }}" alt="Current signature" style="max-height:60px; display:block;">
+            </div>
+          {% endif %}
+          {{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+
+      {% for error in user_form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      {% for error in profile_form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+
+      <button type="submit" class="btn btn-primary">Save profile</button>
+    </form>
+
+    <hr class="my-4">
+    <a href="{% url 'password_change' %}" class="btn btn-outline-secondary">Change password</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load currency %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Dashboard</h1>
+
+{% if pending_link_requests %}
+  <div class="card mb-3 border-warning">
+    <div class="card-header bg-warning-subtle">Pending statement link requests</div>
+    <ul class="list-group list-group-flush">
+      {% for req in pending_link_requests %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {{ req.tenant.full_name }} — requested {{ req.requested_at|date:"d M Y H:i" }}
+          <form method="post" action="{% url 'handle_link_request' req.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-primary">Generate &amp; send new link</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-3"><div class="card p-3"><div class="text-muted small">Collected this month</div><div class="h5">{{ collected_this_month|ugx }}</div></div></div>
+  <div class="col-sm-3"><div class="card p-3"><div class="text-muted small">Expenses this month</div><div class="h5">{{ expenses_this_month|ugx }}</div></div></div>
+  <div class="col-sm-3"><div class="card p-3"><div class="text-muted small">Net income</div><div class="h5">{{ net_income|ugx }}</div></div></div>
+  <div class="col-sm-3"><div class="card p-3"><div class="text-muted small">Occupancy</div><div class="h5">{{ occupancy_rate }}% ({{ occupied_units }}/{{ total_units }})</div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <h2 class="h5">Tenants with outstanding balances</h2>
+    <table class="table table-sm bg-white">
+      <thead><tr><th>Tenant</th><th>Unit</th><th>Arrears</th></tr></thead>
+      <tbody>
+        {% for tenancy, balance in outstanding %}
+          <tr>
+            <td><a href="{% url 'tenant_detail' tenancy.tenant.pk %}">{{ tenancy.tenant.full_name }}</a></td>
+            <td>{{ tenancy.unit }}</td>
+            <td class="text-danger">{{ balance.balance|ugx }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="text-muted">None — everyone is up to date.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-6">
+    <h2 class="h5">Recent payments</h2>
+    <table class="table table-sm bg-white">
+      {% for payment in recent_payments %}
+        <tr><td>{{ payment.payment_date }}</td><td>{{ payment.tenancy.tenant.full_name }}</td><td>{{ payment.amount|ugx }}</td></tr>
+      {% empty %}<tr><td class="text-muted">No payments yet.</td></tr>{% endfor %}
+    </table>
+    <h2 class="h5">Recent expenses</h2>
+    <table class="table table-sm bg-white">
+      {% for expense in recent_expenses %}
+        <tr><td>{{ expense.date }}</td><td>{{ expense.property }}</td><td>{{ expense.amount|ugx }}</td></tr>
+      {% empty %}<tr><td class="text-muted">No expenses yet.</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

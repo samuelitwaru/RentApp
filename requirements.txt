@@ -1,0 +1,8 @@
+Django>=5.0,<5.3
+django-environ>=0.11
+django-phonenumber-field[phonenumberslite]>=7.3
+django-ratelimit>=4.1
+reportlab>=5.1
+PyMuPDF>=1.24
+num2words>=0.5.13
+python-dateutil>=2.9

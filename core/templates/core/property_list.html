@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Properties{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Properties</h1>
+  <a href="{% url 'property_create' %}" class="btn btn-primary btn-sm">Add property</a>
+</div>
+<form method="get" class="mb-3">
+  <input type="search" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search by name">
+</form>
+<div class="list-group">
+  {% for property in properties %}
+    <a href="{% url 'property_detail' property.pk %}" class="list-group-item list-group-item-action">
+      <div class="d-flex justify-content-between">
+        <strong>{{ property.name }}</strong>
+        <span class="text-muted small">{{ property.units.count }} unit(s)</span>
+      </div>
+      <div class="text-muted small">{{ property.location }}</div>
+    </a>
+  {% empty %}
+    <p class="text-muted">No properties yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

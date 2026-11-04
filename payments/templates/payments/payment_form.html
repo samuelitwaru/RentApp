@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{{ title }}</h1>
+{% if tenancy_next_period_map %}{{ tenancy_next_period_map|json_script:"tenancy-next-period-data" }}{% endif %}
+{% if tenancy_monthly_rent_map %}{{ tenancy_monthly_rent_map|json_script:"tenancy-monthly-rent-data" }}{% endif %}
+<form method="post" novalidate id="payment-form">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}<div class="alert alert-warning">{{ error }}</div>{% endfor %}
+  {% for field in form %}
+    {% if field.name == "period_end" or field.name == "amount" or field.name == "reference" %}
+      {# rendered together with its paired field below #}
+    {% elif field.name == "payment_date" %}
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+          {{ form.amount }}
+          {% for error in form.amount.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    {% elif field.name == "period_start" %}
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="{{ form.period_end.id_for_label }}">{{ form.period_end.label }}</label>
+          {{ form.period_end }}
+          {% for error in form.period_end.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12">
+          <div id="period-date-error" class="text-danger small d-none">Period start cannot be after period end.</div>
+        </div>
+      </div>
+    {% elif field.name == "method" %}
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="{{ form.reference.id_for_label }}">{{ form.reference.label }}</label>
+          {{ form.reference }}
+          {% for error in form.reference.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    {% elif field.name != "confirm_inactive" %}
+      <div class="mb-3">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+    {% endif %}
+  {% endfor %}
+  {% if show_inactive_confirm %}
+    <div class="form-check mb-3">
+      {{ form.confirm_inactive }}
+      <label class="form-check-label" for="{{ form.confirm_inactive.id_for_label }}">
+        {{ form.confirm_inactive.label }}
+      </label>
+    </div>
+  {% else %}
+    <div style="display:none">{{ form.confirm_inactive }}</div>
+  {% endif %}
+  <button type="submit" class="btn btn-primary" id="payment-submit">Save</button>
+  <a href="{% url 'payment_list' %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+<script>
+(function () {
+  var tenancySelect = document.getElementById("{{ form.tenancy.id_for_label }}");
+  var amountInput = document.getElementById("{{ form.amount.id_for_label }}");
+  var periodStart = document.getElementById("{{ form.period_start.id_for_label }}");
+  var periodEnd = document.getElementById("{{ form.period_end.id_for_label }}");
+  var periodError = document.getElementById("period-date-error");
+  var notesField = document.getElementById("{{ form.notes.id_for_label }}");
+  var form = document.getElementById("payment-form");
+  var nextPeriodDataEl = document.getElementById("tenancy-next-period-data");
+  var nextPeriodByTenancy = nextPeriodDataEl ? JSON.parse(nextPeriodDataEl.textContent) : {};
+  var rentDataEl = document.getElementById("tenancy-monthly-rent-data");
+  var rentByTenancy = rentDataEl ? JSON.parse(rentDataEl.textContent) : {};
+  var autoFillEnabled = !!(nextPeriodDataEl || rentDataEl);
+  var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var lastAutoNotes = notesField ? notesField.value : "";
+
+  function syncPeriodConstraints() {
+    if (!periodStart || !periodEnd) return;
+    if (periodStart.value) periodEnd.min = periodStart.value;
+    if (periodEnd.value) periodStart.max = periodEnd.value;
+  }
+
+  function validatePeriod() {
+    if (!periodStart || !periodEnd) return true;
+    var valid = !(periodStart.value && periodEnd.value && periodStart.value > periodEnd.value);
+    if (periodError) periodError.classList.toggle("d-none", valid);
+    periodStart.classList.toggle("is-invalid", !valid);
+    periodEnd.classList.toggle("is-invalid", !valid);
+    return valid;
+  }
+
+  function fillNextPeriodStart() {
+    if (!tenancySelect || !periodStart) return;
+    var nextStart = nextPeriodByTenancy[tenancySelect.value];
+    if (nextStart) {
+      periodStart.value = nextStart;
+      syncPeriodConstraints();
+      validatePeriod();
+    }
+  }
+
+  function parseISODate(str) {
+    var parts = str.split("-");
+    return { year: parseInt(parts[0], 10), month: parseInt(parts[1], 10), day: parseInt(parts[2], 10) };
+  }
+
+  function pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function lastDayOfMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  function monthsCoveredList() {
+    if (!periodStart || !periodEnd || !periodStart.value || !periodEnd.value) return null;
+    var start = parseISODate(periodStart.value);
+    var end = parseISODate(periodEnd.value);
+    var startIndex = start.year * 12 + (start.month - 1);
+    var endIndex = end.year * 12 + (end.month - 1);
+    if (endIndex < startIndex) return null;
+    var months = [];
+    for (var i = startIndex; i <= endIndex; i++) {
+      months.push(MONTH_NAMES[i % 12] + " " + Math.floor(i / 12));
+    }
+    return months;
+  }
+
+  function updateNotesWithMonths() {
+    if (!autoFillEnabled || !notesField) return;
+    var months = monthsCoveredList();
+    if (!months) return;
+    var text = "Months paid for: " + months.join(", ");
+    if (notesField.value === "" || notesField.value === lastAutoNotes) {
+      notesField.value = text;
+      lastAutoNotes = text;
+    }
+  }
+
+  function fillPeriodEndFromAmount() {
+    if (!amountInput || !periodEnd || !periodStart || !tenancySelect) return;
+    var rent = parseFloat(rentByTenancy[tenancySelect.value]);
+    var amount = parseFloat(amountInput.value);
+    if (!rent || rent <= 0 || !amount || amount <= 0 || !periodStart.value) return;
+
+    var months = Math.max(1, Math.ceil(amount / rent));
+    var start = parseISODate(periodStart.value);
+    var totalMonthIndex = (start.month - 1) + (months - 1);
+    var targetYear = start.year + Math.floor(totalMonthIndex / 12);
+    var targetMonth = (totalMonthIndex % 12) + 1;
+    var lastDay = lastDayOfMonth(targetYear, targetMonth);
+
+    periodEnd.value = targetYear + "-" + pad2(targetMonth) + "-" + pad2(lastDay);
+    syncPeriodConstraints();
+    validatePeriod();
+    updateNotesWithMonths();
+  }
+
+  if (tenancySelect && nextPeriodDataEl) {
+    tenancySelect.addEventListener("change", function () {
+      fillNextPeriodStart();
+      fillPeriodEndFromAmount();
+      updateNotesWithMonths();
+    });
+    if (tenancySelect.value && periodStart && !periodStart.value) {
+      fillNextPeriodStart();
+    }
+  }
+
+  if (amountInput) {
+    amountInput.addEventListener("input", fillPeriodEndFromAmount);
+  }
+
+  if (periodStart) {
+    periodStart.addEventListener("change", function () {
+      syncPeriodConstraints();
+      validatePeriod();
+      fillPeriodEndFromAmount();
+      updateNotesWithMonths();
+    });
+  }
+  if (periodEnd) {
+    periodEnd.addEventListener("change", function () {
+      syncPeriodConstraints();
+      validatePeriod();
+      updateNotesWithMonths();
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      if (!validatePeriod()) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  syncPeriodConstraints();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Tenants{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Tenants</h1>
+  <a href="{% url 'tenant_create' %}" class="btn btn-primary btn-sm">Add tenant</a>
+</div>
+<form method="get" class="mb-3">
+  <input type="search" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search by name">
+</form>
+<div class="list-group">
+  {% for tenant in tenants %}
+    <a href="{% url 'tenant_detail' tenant.pk %}" class="list-group-item list-group-item-action">
+      <div class="d-flex justify-content-between">
+        <strong>{{ tenant.full_name }}</strong>
+        <span class="text-muted small">{{ tenant.phone }}</span>
+      </div>
+    </a>
+  {% empty %}
+    <p class="text-muted">No tenants yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

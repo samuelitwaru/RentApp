@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Too many attempts{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <h1 class="h4">Too many incorrect attempts</h1>
+  <p class="text-muted">Please try again after 15 minutes.</p>
+</div>
+{% endblock %}

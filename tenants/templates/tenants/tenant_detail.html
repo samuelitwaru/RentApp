@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load currency %}
+{% block title %}{{ tenant.full_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">{{ tenant.full_name }}</h1>
+  <div>
+    <a href="{% url 'tenant_statement' tenant.pk %}" class="btn btn-outline-primary btn-sm">View statement</a>
+    <a href="{% url 'tenant_edit' tenant.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+    <a href="{% url 'tenant_delete' tenant.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
+  </div>
+</div>
+<p class="text-muted mb-1">Phone: {{ tenant.phone }}{% if tenant.email %} · {{ tenant.email }}{% endif %}</p>
+{% if tenant.national_id %}<p class="text-muted mb-1">National ID: {{ tenant.national_id }}</p>{% endif %}
+{% if tenant.notes %}<p>{{ tenant.notes }}</p>{% endif %}
+
+<div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+  <h2 class="h5 mb-0">Tenancies</h2>
+  <a href="{% url 'tenancy_create' %}?tenant={{ tenant.pk }}" class="btn btn-primary btn-sm">Add tenancy</a>
+</div>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Unit</th><th>Start</th><th>End</th><th>Rent</th><th>Balance</th><th>Active</th><th></th></tr></thead>
+  <tbody>
+    {% for tenancy, balance in tenancies %}
+      <tr>
+        <td>{{ tenancy.unit }}</td>
+        <td>{{ tenancy.start_date }}</td>
+        <td>{{ tenancy.end_date|default:"—" }}</td>
+        <td>{{ tenancy.agreed_monthly_rent|ugx }}</td>
+        <td>
+          {% if balance.is_in_arrears %}
+            <span class="text-danger">{{ balance.balance|ugx }} arrears</span>
+          {% elif balance.is_in_credit %}
+            <span class="text-success">{{ balance.abs_balance|ugx }} credit</span>
+          {% else %}
+            <span class="text-muted">Settled</span>
+          {% endif %}
+        </td>
+        <td>{% if tenancy.is_active %}Yes{% else %}No{% endif %}</td>
+        <td class="text-end">
+          <a href="{% url 'tenancy_edit' tenancy.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+          <a href="{% url 'tenancy_delete' tenancy.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="text-muted">No tenancies yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+  <h2 class="h5 mb-0">Statement access links</h2>
+  <a href="{% url 'access_link_create' tenant.pk %}" class="btn btn-primary btn-sm">Generate access link</a>
+</div>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Created</th><th>Expires</th><th>Status</th><th>Last used</th><th>Access count</th><th></th></tr></thead>
+  <tbody>
+    {% for link in access_links %}
+      <tr>
+        <td>{{ link.created_at|date:"d M Y H:i" }}</td>
+        <td>{{ link.expires_at|date:"d M Y H:i" }}</td>
+        <td>
+          {% if link.revoked %}<span class="text-danger">Revoked</span>
+          {% elif link.is_valid %}<span class="text-success">Active</span>
+          {% else %}<span class="text-muted">Expired</span>{% endif %}
+        </td>
+        <td>{{ link.last_accessed_at|date:"d M Y H:i"|default:"Never" }}</td>
+        <td>{{ link.access_count }}</td>
+        <td class="text-end">
+          {% if not link.revoked %}
+            <form method="post" action="{% url 'access_link_revoke' link.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">Revoke</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="text-muted">No access links yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
