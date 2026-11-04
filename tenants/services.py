@@ -73,6 +73,15 @@ def get_pending_months(tenancy, as_of=None):
     return [(first_pending + relativedelta(months=i)).replace(day=1) for i in range(arrears_months)]
 
 
+def format_month_range(months):
+    """Format a list of consecutive month-start dates as e.g. 'Jun 2026 - Dec 2026'."""
+    if not months:
+        return ""
+    if len(months) == 1:
+        return months[0].strftime("%b %Y")
+    return f"{months[0].strftime('%b %Y')} - {months[-1].strftime('%b %Y')}"
+
+
 def get_next_period_start(tenancy):
     """First day of the next month not yet covered by a recorded payment."""
     latest_end = tenancy.payments.aggregate(latest=Max("period_end"))["latest"]
@@ -92,7 +101,7 @@ def get_tenant_statement_data(tenant):
                 "tenancy": tenancy,
                 "payments": payments,
                 "balance": balance,
-                "pending_months_display": ", ".join(m.strftime("%b %Y") for m in pending_months),
+                "pending_months_display": format_month_range(pending_months),
             }
         )
     return data

@@ -144,11 +144,17 @@
     return months;
   }
 
+  function formatMonthRange(months) {
+    if (!months || !months.length) return "";
+    if (months.length === 1) return months[0];
+    return months[0] + " - " + months[months.length - 1];
+  }
+
   function updateNotesWithMonths() {
     if (!autoFillEnabled || !notesField) return;
     var months = monthsCoveredList();
     if (!months) return;
-    var text = "Months paid for: " + months.join(", ");
+    var text = "Months paid for: " + formatMonthRange(months);
     if (notesField.value === "" || notesField.value === lastAutoNotes) {
       notesField.value = text;
       lastAutoNotes = text;

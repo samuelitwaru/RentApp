@@ -6,7 +6,7 @@ from num2words import num2words
 
 from core.models import LandlordProfile
 from core.templatetags.currency import ugx
-from tenants.services import get_pending_months, get_tenancy_balance
+from tenants.services import format_month_range, get_pending_months, get_tenancy_balance
 from .models import Receipt, ReceiptSequence
 
 
@@ -64,7 +64,7 @@ def _receipt_context(payment):
         "property": tenancy.unit.property,
         "amount_words": amount_in_words(payment.amount),
         "balance": balance,
-        "pending_months_display": ", ".join(m.strftime("%b %Y") for m in pending_months),
+        "pending_months_display": format_month_range(pending_months),
         "signer_name": signer_name,
         "signature_path": signature_path,
         "header_business_name": (
