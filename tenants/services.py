@@ -81,12 +81,20 @@ def get_next_period_start(tenancy):
 
 
 def get_tenant_statement_data(tenant):
-    """Per-tenancy statement data: tenancy, ordered payments, and balance."""
+    """Per-tenancy statement data: tenancy, ordered payments, and current overall balance."""
     data = []
     for tenancy in tenant.tenancies.select_related("unit", "unit__property").all():
         payments = tenancy.payments.select_related("receipt").order_by("-payment_date")
         balance = get_tenancy_balance(tenancy)
-        data.append({"tenancy": tenancy, "payments": payments, "balance": balance})
+        pending_months = get_pending_months(tenancy)
+        data.append(
+            {
+                "tenancy": tenancy,
+                "payments": payments,
+                "balance": balance,
+                "pending_months_display": ", ".join(m.strftime("%b %Y") for m in pending_months),
+            }
+        )
     return data
 
 

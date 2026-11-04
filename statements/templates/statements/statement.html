@@ -19,7 +19,9 @@
     <div class="card-body">
       <p class="mb-1">Monthly rent: {{ item.tenancy.agreed_monthly_rent|ugx }}</p>
       {% if item.balance.is_in_arrears %}
-        <p class="text-danger">Outstanding: {{ item.balance.balance|ugx }}</p>
+        <p class="text-danger">
+          Outstanding: {{ item.balance.balance|ugx }}{% if item.pending_months_display %} ({{ item.pending_months_display }}){% endif %}
+        </p>
       {% elif item.balance.is_in_credit %}
         <p class="text-success">Credit: {{ item.balance.abs_balance|ugx }}</p>
       {% else %}
