@@ -118,7 +118,12 @@ class PaymentUpdateView(LoginRequiredMixin, UpdateView):
         return reverse("payment_detail", args=[self.object.pk])
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(**kwargs, title="Edit payment")
+        return super().get_context_data(
+            **kwargs,
+            title="Edit payment",
+            tenancy_next_period_map=_tenancy_next_period_map(),
+            tenancy_monthly_rent_map=_tenancy_monthly_rent_map(),
+        )
 
 
 class PaymentDeleteView(LoginRequiredMixin, DeleteView):
