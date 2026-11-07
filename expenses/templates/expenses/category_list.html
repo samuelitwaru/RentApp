@@ -5,6 +5,7 @@
   <h1 class="h4 mb-0">Expense categories</h1>
   <a href="{% url 'expense_category_create' %}" class="btn btn-primary btn-sm">Add category</a>
 </div>
+<div class="table-scroll">
 <table class="table table-sm bg-white">
   <thead><tr><th>Name</th><th>Description</th><th></th></tr></thead>
   <tbody>
@@ -20,4 +21,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

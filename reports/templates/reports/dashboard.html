@@ -31,6 +31,7 @@
 <div class="row g-3">
   <div class="col-md-6">
     <h2 class="h5">Tenants with outstanding balances</h2>
+    <div class="table-scroll">
     <table class="table table-sm bg-white">
       <thead><tr><th>Tenant</th><th>Unit</th><th>Arrears</th></tr></thead>
       <tbody>
@@ -45,20 +46,25 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
   <div class="col-md-6">
     <h2 class="h5">Recent payments</h2>
+    <div class="table-scroll">
     <table class="table table-sm bg-white">
       {% for payment in recent_payments %}
         <tr><td>{{ payment.payment_date }}</td><td>{{ payment.tenancy.tenant.full_name }}</td><td>{{ payment.amount|ugx }}</td></tr>
       {% empty %}<tr><td class="text-muted">No payments yet.</td></tr>{% endfor %}
     </table>
+    </div>
     <h2 class="h5">Recent expenses</h2>
+    <div class="table-scroll">
     <table class="table table-sm bg-white">
       {% for expense in recent_expenses %}
         <tr><td>{{ expense.date }}</td><td>{{ expense.property }}</td><td>{{ expense.amount|ugx }}</td></tr>
       {% empty %}<tr><td class="text-muted">No expenses yet.</td></tr>{% endfor %}
     </table>
+    </div>
   </div>
 </div>
 {% endblock %}

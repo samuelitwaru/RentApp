@@ -29,6 +29,7 @@
   <div class="col-sm-2"><input type="date" name="date_to" value="{{ request.GET.date_to }}" class="form-control"></div>
   <div class="col-sm-2"><button class="btn btn-outline-secondary w-100">Filter</button></div>
 </form>
+<div class="table-scroll">
 <table class="table table-sm bg-white">
   <thead><tr><th>Date</th><th>Tenant</th><th>Unit</th><th>Amount</th><th>Period</th><th>Method</th><th>Notes</th><th>Receipt</th></tr></thead>
   <tbody>
@@ -57,6 +58,7 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% if is_paginated %}
 <nav>
   <ul class="pagination">

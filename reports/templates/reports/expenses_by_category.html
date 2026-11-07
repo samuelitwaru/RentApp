@@ -11,6 +11,7 @@
   <div class="col-sm-4"><input type="date" name="date_to" value="{{ request.GET.date_to }}" class="form-control"></div>
   <div class="col-sm-4"><button class="btn btn-outline-secondary w-100">Filter</button></div>
 </form>
+<div class="table-scroll">
 <table class="table table-sm bg-white">
   <thead><tr><th>Category</th><th>Total</th></tr></thead>
   <tbody>
@@ -19,4 +20,5 @@
     {% empty %}<tr><td colspan="2" class="text-muted">No data.</td></tr>{% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

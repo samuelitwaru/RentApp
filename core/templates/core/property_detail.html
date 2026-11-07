@@ -16,6 +16,7 @@
   <h2 class="h5 mb-0">Units</h2>
   <a href="{% url 'unit_create' property.pk %}" class="btn btn-primary btn-sm">Add unit</a>
 </div>
+<div class="table-scroll">
 <table class="table table-sm bg-white">
   <thead><tr><th>Name</th><th>Monthly rent</th><th>Status</th><th></th></tr></thead>
   <tbody>
@@ -34,4 +35,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

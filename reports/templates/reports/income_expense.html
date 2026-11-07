@@ -19,6 +19,7 @@
 </form>
 
 <h2 class="h5">By month</h2>
+<div class="table-scroll">
 <table class="table table-sm bg-white">
   <thead><tr><th>Month</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead>
   <tbody>
@@ -32,8 +33,10 @@
     {% empty %}<tr><td colspan="4" class="text-muted">No data.</td></tr>{% endfor %}
   </tbody>
 </table>
+</div>
 
 <h2 class="h5">By property</h2>
+<div class="table-scroll">
 <table class="table table-sm bg-white">
   <thead><tr><th>Property</th><th>Income</th><th>Expenses</th></tr></thead>
   <tbody>
@@ -42,4 +45,5 @@
     {% empty %}<tr><td colspan="3" class="text-muted">No data.</td></tr>{% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}
