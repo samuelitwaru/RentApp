@@ -9,6 +9,11 @@ urlpatterns = [
         name="tenant_statement",
     ),
     path(
+        "tenants/<int:pk>/statement/pdf/",
+        views.TenantStatementPdfView.as_view(),
+        name="tenant_statement_pdf",
+    ),
+    path(
         "tenants/<int:tenant_pk>/access-links/new/",
         views.AccessLinkCreateView.as_view(),
         name="access_link_create",
@@ -16,6 +21,7 @@ urlpatterns = [
     path("access-links/<int:pk>/revoke/", views.revoke_access_link, name="access_link_revoke"),
     path("link-requests/<int:pk>/handle/", views.handle_link_request, name="handle_link_request"),
     path("statement/<str:token>/", views.public_statement_view, name="public_statement"),
+    path("statement/<str:token>/pdf/", views.public_statement_pdf, name="public_statement_pdf"),
     path(
         "statement/<str:token>/receipt/<int:payment_pk>/<str:fmt>/",
         views.public_statement_receipt,

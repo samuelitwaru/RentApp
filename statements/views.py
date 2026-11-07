@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -16,7 +17,7 @@ from tenants.models import Tenant
 from tenants.services import get_tenant_statement_data
 from .forms import AccessLinkCreateForm, StatementPinForm
 from .models import LinkRequest, TenantAccessLink
-from .services import generate_raw_token, hash_token
+from .services import generate_raw_token, hash_token, render_statement_pdf
 
 PIN_LOCKOUT_MINUTES = 15
 PIN_MAX_ATTEMPTS = 5
@@ -214,10 +215,40 @@ class TenantStatementView(LoginRequiredMixin, View):
         )
 
 
+def _statement_pdf_response(tenant):
+    tenancies = get_tenant_statement_data(tenant)
+    pdf_bytes = render_statement_pdf(tenant, tenancies)
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    safe_name = tenant.full_name.replace(" ", "_")
+    response["Content-Disposition"] = f'attachment; filename="statement-{safe_name}.pdf"'
+    return response
+
+
+class TenantStatementPdfView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        tenant = get_object_or_404(Tenant, pk=pk)
+        return _statement_pdf_response(tenant)
+
+
+@public_view(rate="20/h")
+def public_statement_pdf(request, token):
+    link = _lookup_link(token)
+    if link is None or not link.is_valid():
+        return render(
+            request, "statements/link_expired.html", {"link": link, "token": token}, status=410
+        )
+
+    landlord = LandlordProfile.get_solo()
+    session_state = request.session.get(_pin_session_key(link.token_hash), {})
+    if landlord.require_statement_pin and not session_state.get("verified"):
+        return redirect("public_statement", token=token)
+
+    return _statement_pdf_response(link.tenant)
+
+
 @public_view(rate="60/h")
 def public_statement_receipt(request, token, payment_pk, fmt):
     from receipts.services import render_receipt_jpg, render_receipt_pdf
-    from django.http import HttpResponse
 
     link = _lookup_link(token)
     if link is None or not link.is_valid():

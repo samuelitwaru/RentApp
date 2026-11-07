@@ -3,7 +3,14 @@
 {% block title %}Your statement{% endblock %}
 {% block extra_head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 {% block content %}
-<h1 class="h4 mb-1">{{ tenant.full_name }}</h1>
+<div class="d-flex justify-content-between align-items-start mb-1">
+  <h1 class="h4 mb-0">{{ tenant.full_name }}</h1>
+  {% if is_internal %}
+    <a href="{% url 'tenant_statement_pdf' tenant.pk %}" class="btn btn-outline-primary btn-sm">Download PDF</a>
+  {% else %}
+    <a href="{% url 'public_statement_pdf' token %}" class="btn btn-outline-primary btn-sm">Download PDF</a>
+  {% endif %}
+</div>
 {% if is_internal %}
   <p class="text-muted small"><a href="{% url 'tenant_detail' tenant.pk %}">&larr; Back to tenant</a></p>
 {% else %}
