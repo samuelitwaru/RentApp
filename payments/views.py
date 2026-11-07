@@ -1,11 +1,16 @@
+import zipfile
 from datetime import date
+from io import BytesIO
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from receipts.services import get_or_create_receipt
+from receipts.services import get_or_create_receipt, render_receipt_jpg
 from tenants.models import Tenancy
 from tenants.services import get_next_period_start
 from .forms import PaymentForm
@@ -130,3 +135,31 @@ class PaymentDeleteView(LoginRequiredMixin, DeleteView):
     model = Payment
     template_name = "generic_confirm_delete.html"
     success_url = reverse_lazy("payment_list")
+
+
+class PaymentBulkReceiptZipView(LoginRequiredMixin, View):
+    """Exports the JPG receipts of the checked payments on the list page as one ZIP."""
+
+    def post(self, request):
+        payment_ids = request.POST.getlist("payment_ids")
+        payments = Payment.objects.filter(pk__in=payment_ids).select_related(
+            "tenancy__tenant", "receipt"
+        )
+        if not payments:
+            messages.warning(request, "Select at least one payment to export.")
+            return redirect("payment_list")
+
+        buffer = BytesIO()
+        used_names = set()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for payment in payments:
+                receipt = get_or_create_receipt(payment)
+                name = f"{receipt.receipt_number}.jpg"
+                if name in used_names:
+                    name = f"{receipt.receipt_number}-{payment.pk}.jpg"
+                used_names.add(name)
+                zf.writestr(name, render_receipt_jpg(payment))
+
+        response = HttpResponse(buffer.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = 'attachment; filename="receipts.zip"'
+        return response
